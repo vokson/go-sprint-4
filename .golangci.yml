@@ -1,0 +1,41 @@
+version: "2"
+
+run:
+  tests: false
+
+linters:
+  default: all
+  disable:
+    - exhaustruct      # deprecated -> exhaustruct_v5
+    - gomodguard       # deprecated -> gomodguard_v2
+    - wsl              # superseded by wsl_v5
+    - varnamelen       # flags short names in source
+    - nlreturn         # blank-line-before-return opinion
+    - wsl_v5           # whitespace opinion
+  settings:
+    govet:
+      enable:
+        - shadow
+    lll:
+      line-length: 160
+    depguard:
+      rules:
+        main:
+          allow:
+            - $gostd
+            - github.com/Yandex-Practicum/tracker
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

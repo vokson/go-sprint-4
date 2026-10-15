@@ -18,6 +18,8 @@ const (
 	minInH                     = 60   // количество минут в часе.
 	stepLengthCoefficient      = 0.45 // коэффициент для расчета длины шага на основе роста.
 	walkingCaloriesCoefficient = 0.5  // коэффициент для расчета калорий при ходьбе
+	// Количество полей в строке данных.
+	trainingFields = 3
 )
 
 // trainingInfoFormat задаёт шаблон отчёта о тренировке.
@@ -29,47 +31,47 @@ const trainingInfoFormat = `Тип тренировки: %s
 `
 
 var (
-	// ErrSplitString возвращается, если строку не удалось разбить на три части.
-	ErrSplitString = errors.New("ошибка разделения строки на части")
-	// ErrStepsCount возвращается, если количество шагов не положительно.
-	ErrStepsCount = errors.New("количество шагов <= 0")
-	// ErrDuration возвращается, если длительность не положительна.
-	ErrDuration = errors.New("промежуток времени <= 0")
-	// ErrHeight возвращается, если рост не положителен.
-	ErrHeight = errors.New("рост <= 0")
-	// ErrWeight возвращается, если вес не положителен.
-	ErrWeight = errors.New("вес <= 0")
-	// ErrUnknownTraining возвращается для неизвестного типа тренировки.
-	ErrUnknownTraining = errors.New("неизвестный тип тренировки")
+	// errSplitString возвращается, если строку не удалось разбить на три части.
+	errSplitString = errors.New("failed to split string")
+	// errStepsCount возвращается, если количество шагов не положительно.
+	errStepsCount = errors.New("steps count must be positive")
+	// errDuration возвращается, если длительность не положительна.
+	errDuration = errors.New("duration must be positive")
+	// errHeight возвращается, если рост не положителен.
+	errHeight = errors.New("height must be positive")
+	// errWeight возвращается, если вес не положителен.
+	errWeight = errors.New("weight must be positive")
+	// errUnknownTraining возвращается для неизвестного типа тренировки.
+	errUnknownTraining = errors.New("неизвестный тип тренировки")
 )
 
 func parseTraining(data string) (int, string, time.Duration, error) {
 	arr := strings.Split(data, ",")
-	if len(arr) != 3 {
-		return 0, "", 0, ErrSplitString
+	if len(arr) != trainingFields {
+		return 0, "", 0, errSplitString
 	}
 
 	steps, err := strconv.Atoi(arr[0])
 	if err != nil {
-		return 0, "", 0, err
+		return 0, "", 0, fmt.Errorf("parsing steps count: %w", err)
 	}
 	if steps <= 0 {
-		return 0, "", 0, ErrStepsCount
+		return 0, "", 0, errStepsCount
 	}
 
 	duration, err := time.ParseDuration(arr[2])
 	if err != nil {
-		return 0, "", 0, err
+		return 0, "", 0, fmt.Errorf("parsing duration: %w", err)
 	}
 	if duration <= 0 {
-		return 0, "", 0, ErrDuration
+		return 0, "", 0, errDuration
 	}
 
 	return steps, arr[1], duration, nil
 }
 
 func distance(steps int, height float64) float64 {
-	return stepLengthCoefficient * height * float64(steps) / float64(mInKm)
+	return stepLengthCoefficient * height * float64(steps) / mInKm
 }
 
 func meanSpeed(steps int, height float64, duration time.Duration) float64 {
@@ -99,8 +101,8 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 	case "Ходьба":
 		caloriesFunc = WalkingSpentCalories
 	default:
-		log.Println(ErrUnknownTraining)
-		return "", ErrUnknownTraining
+		log.Println(errUnknownTraining)
+		return "", errUnknownTraining
 	}
 
 	calories, err := caloriesFunc(steps, weight, height, duration)
@@ -116,16 +118,16 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 // шагов, весу, росту и длительности нагрузки.
 func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
 	if steps <= 0 {
-		return 0.0, ErrStepsCount
+		return 0.0, errStepsCount
 	}
 	if weight <= 0 {
-		return 0.0, ErrWeight
+		return 0.0, errWeight
 	}
 	if height <= 0 {
-		return 0.0, ErrHeight
+		return 0.0, errHeight
 	}
 	if duration <= 0 {
-		return 0.0, ErrDuration
+		return 0.0, errDuration
 	}
 	speed := meanSpeed(steps, height, duration)
 	return (weight * speed * duration.Minutes()) / float64(minInH), nil

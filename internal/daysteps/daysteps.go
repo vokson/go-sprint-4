@@ -5,17 +5,20 @@ package daysteps
 import (
 	"errors"
 	"fmt"
-	"github.com/Yandex-Practicum/tracker/internal/spentcalories"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Yandex-Practicum/tracker/internal/spentcalories"
 )
 
 const (
-	// Длина одного шага в метрах
+	// Длина одного шага в метрах.
 	stepLength = 0.65
-	// Количество метров в одном километре
+	// Количество метров в одном километре.
 	mInKm = 1000
+	// Количество полей в строке данных.
+	expectedFields = 2
 )
 
 // dayActionFormat задаёт шаблон отчёта о дневной активности.
@@ -25,34 +28,34 @@ const dayActionFormat = `Количество шагов: %d.
 `
 
 var (
-	// ErrSplitString возвращается, если строку не удалось разбить на две части.
-	ErrSplitString = errors.New("ошибка разделения строки на части")
-	// ErrStepsCount возвращается, если количество шагов не положительно.
-	ErrStepsCount = errors.New("количество шагов <= 0")
-	// ErrDuration возвращается, если длительность не положительна.
-	ErrDuration = errors.New("промежуток времени <= 0")
+	// errSplitString возвращается, если строку не удалось разбить на две части.
+	errSplitString = errors.New("failed to split string")
+	// errStepsCount возвращается, если количество шагов не положительно.
+	errStepsCount = errors.New("steps count must be positive")
+	// errDuration возвращается, если длительность не положительна.
+	errDuration = errors.New("duration must be positive")
 )
 
 func parsePackage(data string) (int, time.Duration, error) {
 	pair := strings.Split(data, ",")
-	if len(pair) != 2 {
-		return 0, 0, ErrSplitString
+	if len(pair) != expectedFields {
+		return 0, 0, errSplitString
 	}
 
 	steps, err := strconv.Atoi(pair[0])
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("parsing steps count: %w", err)
 	}
 	if steps <= 0 {
-		return 0, 0, ErrStepsCount
+		return 0, 0, errStepsCount
 	}
 
 	duration, err := time.ParseDuration(pair[1])
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("parsing duration: %w", err)
 	}
 	if duration <= 0 {
-		return 0, 0, ErrDuration
+		return 0, 0, errDuration
 	}
 
 	return steps, duration, nil
@@ -71,7 +74,7 @@ func DayActionInfo(data string, weight, height float64) string {
 		return ""
 	}
 
-	distance := stepLength * float64(steps) / float64(mInKm)
+	distance := stepLength * float64(steps) / mInKm
 
 	calories, err := spentcalories.WalkingSpentCalories(steps, weight, height, duration)
 	if err != nil {
