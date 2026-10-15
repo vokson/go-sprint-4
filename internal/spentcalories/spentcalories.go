@@ -76,7 +76,7 @@ func distance(steps int, height float64) float64 {
 
 func meanSpeed(steps int, height float64, duration time.Duration) float64 {
 	if duration <= 0 {
-		return 0.0
+		return 0
 	}
 	return distance(steps, height) / duration.Hours()
 }
@@ -118,16 +118,16 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 // шагов, весу, росту и длительности нагрузки.
 func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
 	if steps <= 0 {
-		return 0.0, errStepsCount
+		return 0, errStepsCount
 	}
 	if weight <= 0 {
-		return 0.0, errWeight
+		return 0, errWeight
 	}
 	if height <= 0 {
-		return 0.0, errHeight
+		return 0, errHeight
 	}
 	if duration <= 0 {
-		return 0.0, errDuration
+		return 0, errDuration
 	}
 	speed := meanSpeed(steps, height, duration)
 	return (weight * speed * duration.Minutes()) / float64(minInH), nil
@@ -139,7 +139,7 @@ func WalkingSpentCalories(steps int, weight, height float64, duration time.Durat
 	runningCalories, err := RunningSpentCalories(steps, weight, height, duration)
 
 	if err != nil {
-		return 0.0, err
+		return 0, err
 	}
 
 	return walkingCaloriesCoefficient * runningCalories, nil
